@@ -51,8 +51,6 @@ function parse_git_dirty {
 	fi
 }
 
-[ -d /usr/local/etc/bash_completion.d ] && . /usr/local/etc/bash_completion.d/*
-
 alias dps="docker ps"
 alias dpa="docker ps -a"
 alias di="docker images"
@@ -72,3 +70,6 @@ export PS1="\[${PS1_BOLD}\u${PS1_RESET} ${PS1_YELLOW}$(parse_git_branch) ${PS1_G
 export PATH_BIN="$HOME/bin"
 export PATH_PYTHON='/usr/local/opt/python/libexec/bin'
 export PATH=$PATH_BIN:$SCRIPTPATH:$PATH_PYTHON:$PATH
+
+# Bash completion
+[[ -r "$(brew --prefix)/etc/profile.d/bash_completion.sh" ]] && . "$(brew --prefix)/etc/profile.d/bash_completion.sh"
