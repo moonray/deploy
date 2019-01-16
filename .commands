@@ -37,44 +37,65 @@ function init_frontend()
 # initialize github repos
 function init()
 {
-  CURRENTPATH="`pwd`";
-  cd "/Volumes/dev"
-  if [[ ! -d "api" || "$(git -C "ng" rev-parse 2>&1)" ]]; then
-    git clone git@github.com:moonray/api.git api
-    cd api
-
-    git remote add upstream git@github.com:sharpspring/api
-    git fetch upstream
-    git branch master --set-upstream-to upstream/master
-    git pull
-
-    cd ..
+  ABORT=0
+  if [[ ! -s "$HOME/.deploy" ]]; then
+    ABORT=1
+  else
+    source "$HOME/.deploy"
+    if [[ ! -n $GITUSER ]]; then
+      ABORT=1
+    fi
   fi
-  if [[ ! -d "frontend" || "$(git -C "frontend" rev-parse 2>&1)" ]]; then
-    git clone git@github.com:moonray/frontend.git frontend
-    cd frontend
 
-    git remote add upstream git@github.com:sharpspring/frontend
-    git fetch upstream
-    git branch master --set-upstream-to upstream/master
-    git pull
+  if [[ $ABORT -eq 1 ]]; then
+    PS1_RESET="\033[0m"
+    PS1_YELLOW="\033[93m"
 
-    init_frontend
-    cd ..
+    printf "Missing a ${PS1_YELLOW}.deploy${PS1_RESET} configuration file in your home directory.\n"
+    printf "Run ${PS1_YELLOW}deploy${PS1_RESET} to set it up.\n"
+  else
+    CURRENTPATH="`pwd`";
+
+    source "$HOME/.deploy"
+
+    cd "/Volumes/dev"
+    if [[ ! -d "api" || "$(git -C "ng" rev-parse 2>&1)" ]]; then
+      git clone git@github.com:${GITUSER}/api.git api
+      cd api
+
+      git remote add upstream git@github.com:sharpspring/api
+      git fetch upstream
+      git branch master --set-upstream-to upstream/master
+      git pull
+
+      cd ..
+    fi
+    if [[ ! -d "frontend" || "$(git -C "frontend" rev-parse 2>&1)" ]]; then
+      git clone git@github.com:${GITUSER}/frontend.git frontend
+      cd frontend
+
+      git remote add upstream git@github.com:sharpspring/frontend
+      git fetch upstream
+      git branch master --set-upstream-to upstream/master
+      git pull
+
+      init_frontend
+      cd ..
+    fi
+    if [[ ! -d "ng" || "$(git -C "ng" rev-parse 2>&1)" ]]; then
+      git clone git@github.com:${GITUSER}/SharpSpringNG.git ng
+      cd ng
+
+      git remote add upstream git@github.com:sharpspring/SharpSpringNG
+      git fetch upstream
+      git branch master --set-upstream-to upstream/master
+      git pull
+
+      cd ..
+      init_ng
+    fi
+    cd $CURRENTPATH
   fi
-  if [[ ! -d "ng" || "$(git -C "ng" rev-parse 2>&1)" ]]; then
-    git clone git@github.com:moonray/SharpSpringNG.git ng
-    cd ng
-
-    git remote add upstream git@github.com:sharpspring/SharpSpringNG
-    git fetch upstream
-    git branch master --set-upstream-to upstream/master
-    git pull
-
-    cd ..
-    init_ng
-  fi
-  cd $CURRENTPATH
 }
 
 # start up ng docker container

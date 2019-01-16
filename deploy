@@ -70,24 +70,30 @@ if [[ -s "$HOME/.deploy" ]]; then
   source "$HOME/.deploy"
 fi
 
+if [[ ! -n $GITUSER ]]; then
+  printf "Enter your github.com ${PS1_YELLOW}user name${PS1_RESET}:\n"
+  read GITUSER
+fi
+
 if [[ ! -n $GITNAME ]]; then
-  printf "Enter your ${PS1_YELLOW}full name${PS1_RESET} to be recorded in any newly created git commits:"
+  printf "Enter your ${PS1_YELLOW}full name${PS1_RESET} to be recorded in any newly created git commits:\n"
   read GITNAME
 fi
 
 if [[ ! -n $GITEMAIL ]]; then
-  printf "Enter your ${PS1_YELLOW}email address${PS1_RESET} to be recorded in any newly created git commits:"
+  printf "Enter your ${PS1_YELLOW}email address${PS1_RESET} to be recorded in any newly created git commits:\n"
   read GITEMAIL
 fi
 
 if [[ ! -n $MASEMAIL ]]; then
-  printf "Enter your ${PS1_YELLOW}email address${PS1_RESET} to be recorded in any newly created git commits:"
+  printf "Enter your ${PS1_YELLOW}email address${PS1_RESET} to be recorded in any newly created git commits:\n"
   read MASEMAIL
 fi
 
 # Save config to .deploy file.
 echo > "$HOME/.deploy"
 cat > "$HOME/.deploy" << EOF
+GITUSER="${GITUSER}"
 GITNAME="${GITNAME}"
 GITEMAIL="${GITEMAIL}"
 MASEMAIL="${MASEMAIL}"
