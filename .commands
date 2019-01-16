@@ -1,0 +1,96 @@
+#!/bin/bash
+
+# fetch a pr from git and switch to it
+function pr()
+ {
+	if [[ $# -ne 2 ]]; then
+    echo "Missing pullId and ticketId (branch name) paramenters."
+    echo "Example: pr 276 SRSP-8745"
+	else
+		git fetch upstream pull/"$1"/head:"$2"
+		git checkout "$2"
+	fi
+}
+
+function init_ng()
+{
+  cd "/Volumes/dev/ng"
+  make up
+  git submodule update --init
+  ./scripts/dev/docker-compose-bootstrap
+  up
+  yarn install
+  docker exec -it fpm bash <<'EOF'
+php vendor/bin/phinx migrate
+exit
+EOF
+  cd -
+}
+
+function init_frontend()
+{
+  cd "/Volumes/dev/frontend"
+  . scripts/install.sh
+  cd -
+}
+
+# initialize github repos
+function init()
+{
+  CURRENTPATH="`pwd`";
+  cd "/Volumes/dev"
+  if [[ ! -d "api" || "$(git -C "ng" rev-parse 2>&1)" ]]; then
+    git clone git@github.com:moonray/api.git api
+    cd api
+
+    git remote add upstream git@github.com:sharpspring/api
+    git fetch upstream
+    git branch master --set-upstream-to upstream/master
+    git pull
+
+    cd ..
+  fi
+  if [[ ! -d "frontend" || "$(git -C "frontend" rev-parse 2>&1)" ]]; then
+    git clone git@github.com:moonray/frontend.git frontend
+    cd frontend
+
+    git remote add upstream git@github.com:sharpspring/frontend
+    git fetch upstream
+    git branch master --set-upstream-to upstream/master
+    git pull
+
+    init_frontend
+    cd ..
+  fi
+  if [[ ! -d "ng" || "$(git -C "ng" rev-parse 2>&1)" ]]; then
+    git clone git@github.com:moonray/SharpSpringNG.git ng
+    cd ng
+
+    git remote add upstream git@github.com:sharpspring/SharpSpringNG
+    git fetch upstream
+    git branch master --set-upstream-to upstream/master
+    git pull
+
+    cd ..
+    init_ng
+  fi
+  cd $CURRENTPATH
+}
+
+# start up ng docker container
+function up()
+{
+  cd "/Volumes/dev/ng"
+  docker-compose up -d
+  docker-compose stop elasticsearch
+  docker-compose stop searchsync
+  cd -
+}
+
+# wind down ng docker container
+function down()
+{
+  cd "/Volumes/dev/ng"
+  docker-compose down
+  cd -
+}

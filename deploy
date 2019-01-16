@@ -1,0 +1,296 @@
+#!/bin/bash
+
+################################################################################
+# Automatic setup for Bala's Sharpspring laptop.                                           #
+################################################################################
+
+command_exists () {
+  hash "$1" 2> /dev/null
+}
+brew_install () {
+  if [[ -n $2 ]]; then
+    path="$2"
+  else
+    path="/usr/local/bin/$1"
+  fi
+
+  if [[ ! -e "$path" ]]; then
+    echo "Installing $1."
+    brew install "$1"
+  else
+    echo "$1 is already installed."
+  fi
+}
+cask_install () {
+  if [[ -n $2 ]]; then
+    app="$2"
+  else
+    app=`brew cask cat "$1" | sed -n "s/.*app '\([^']*\).*'/\1/p"`
+  fi
+  if [[ ! -n $app || ! -e "/Applications/$app" ]]; then
+    echo "Installing $app ($1)."
+    brew cask install "$1"
+  else
+    echo "$app ($1) is already installed."
+  fi
+}
+mas_install () {
+  if [[ ! -n $2 ]]; then
+    return 0
+  fi
+  app="$2"
+  if [[ ! "$(mas list | grep $1)" ]]; then
+    echo "Installing $app ($1)."
+    mas install "$1"
+  else
+    echo "$app ($1) is already installed."
+  fi
+}
+
+################################################################################
+# Intro.                                                                       #
+################################################################################
+
+echo "################################################################################"
+echo "# Deploy                                                                       #"
+echo "################################################################################"
+echo
+echo "Deploy will configure your dev environment and install all relevant apps."
+echo "Starting deployment..."
+echo
+
+################################################################################
+# Check for .deploy configuration, or prompt user for it.                      #
+################################################################################
+
+PS1_RESET="\033[0m"
+PS1_YELLOW="\033[93m"
+
+if [[ -s "$HOME/.deploy" ]]; then
+  source "$HOME/.deploy"
+fi
+
+if [[ ! -n $GITNAME ]]; then
+  printf "Enter your ${PS1_YELLOW}full name${PS1_RESET} to be recorded in any newly created git commits:"
+  read GITNAME
+fi
+
+if [[ ! -n $GITEMAIL ]]; then
+  printf "Enter your ${PS1_YELLOW}email address${PS1_RESET} to be recorded in any newly created git commits:"
+  read GITEMAIL
+fi
+
+if [[ ! -n $MASEMAIL ]]; then
+  printf "Enter your ${PS1_YELLOW}email address${PS1_RESET} to be recorded in any newly created git commits:"
+  read MASEMAIL
+fi
+
+# Save config to .deploy file.
+echo > "$HOME/.deploy"
+cat > "$HOME/.deploy" << EOF
+GITNAME="${GITNAME}"
+GITEMAIL="${GITEMAIL}"
+MASEMAIL="${MASEMAIL}"
+EOF
+
+################################################################################
+# Start installation.                                                          #
+################################################################################
+
+CURRENTPATH="`pwd`";
+
+# Prevent awkward prompt in middle of deploy; Request acces to root in advance.
+echo "Please enter your password to proceed with deploy:"
+if [[ ! $(sudo echo 0) ]]; then exit; fi
+
+# Install Xcode Command Line Tools.
+if [[ ! -f /usr/bin/xcrun ]]; then
+  echo "Installing Xcode Command Line Tools..."
+  sudo -S xcode-select --install
+fi
+# echo "We'll now accept the Xcode license"
+# sudo -S xcode-select -s /Applications/Xcode.app/Contents/Developer
+# sudo -S xcodebuild -license accept
+
+# Enable command line tools
+sudo -S xcode-select --switch /Library/Developer/CommandLineTools
+
+# Make sure Xcode Command Line Tools are installed.
+if ! command_exists ruby; then
+  echo >&2 "Please install Xcode Command Line Tools manually. Aborting."
+  exit 1
+fi
+
+# If having problems, try:
+# sudo ln -s /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/usr/include /usr/include
+
+################################################################################
+# Homebrew and cask installation.                                              #
+################################################################################
+if ! command_exists brew; then
+  echo "Installing Homebrew..."
+  ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+fi
+
+# Abort if brew installation did not complete.
+if ! command_exists brew; then
+  echo >&2 "Please install brew manually. Aborting."
+  exit 1
+fi
+
+if [[ ! `brew tap | grep homebrew/cask-drivers` ]]; then
+  brew tap homebrew/cask-drivers
+fi
+
+# Homebrew autocompletion.
+if [[ ! -d "$(brew --prefix)/etc/bash_completion.d" ]]; then
+  brew install bash-completion
+fi
+
+if [ ! `brew list | grep mas` ]; then
+  brew install mas
+fi
+# mas signin "$MASEMAIL"
+
+################################################################################
+# Development tools.                                                           #
+################################################################################
+
+# Set git defaults.
+if [[ $(git config --global user.name) != 'Bala Bosch' ]]; then
+  echo "Setting git defaults."
+  git config --global user.name "$GITNAME"
+  git config --global user.email "$GITEMAIL"
+  git config --global push.default 'upstream'
+fi
+
+# XQuartz, used for X11 apps.
+if [[ ! -e "/Applications/Utilities/XQuartz.app" ]]; then
+  echo "Installing XQuartz."
+  brew cask install xquartz
+else
+  echo "XQuartz is already installed."
+fi
+
+# Install python for pip
+brew_install python "/usr/local/opt/python/libexec/bin/pip"
+# Install python2
+brew_install python@2 "/usr/local/bin/python2"
+
+# Install wget
+brew_install wget
+
+# Install watch
+brew_install watch
+
+# Install yarn
+brew_install yarn
+
+# Install iterm2
+cask_install iterm2
+
+# Install docker
+cask_install docker
+
+# Install Java 6 for PHP Storm.
+# if [[ ! -d /opt/homebrew-cask/Caskroom/java6 ]]; then
+#   echo "Installing Java6 for PhpStorm"
+#   brew cask install caskroom/homebrew-versions/java6
+# fi
+
+# Install PHPStorm
+# cask_install phpstorm
+
+# Install quicklook generator.
+if [[ ! -d "$HOME/Library/QuickLook/QLStephen.qlgenerator" ]]; then
+  brew cask install qlstephen
+fi
+
+# Install GPG Suite
+cask_install gpg-suite "GPG Keychain.app"
+
+####################
+#   .bashrc        #
+####################
+SCRIPTPATH="$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )"
+SOURCELINE="source $SCRIPTPATH/.bashrc"
+BASHPROFILEPATH="$HOME/.bash_profile"
+grep -q -x -F "$SOURCELINE" "$BASHPROFILEPATH" || printf "\n$SOURCELINE\n" >> "$BASHPROFILEPATH"
+
+####################
+#   Apps in Dock   #
+####################
+# Google Chrome
+# Slack
+# Messages
+# Visual Studio Code
+# Postman
+# Sequel Pro
+# Tower
+# iTerm
+# Tyme2
+# 1Password
+# Notes
+# Twitch
+# iTunes
+# Daisy Disk
+# Activty Monitor
+# System Preferences
+# |
+# Downloads
+# Trash
+
+####################
+#    Other apps    #
+####################
+
+mas_install 443987910 "1Password.app"
+cask_install bartender "Bartender 3.app"
+cask_install daisydisk
+cask_install fantastical "Fantastical 2.app"
+cask_install firefox
+# cask_install gemini
+# mas_install 508368068 "Get Plain Text.app"
+cask_install google-chrome
+# cask_install integrity
+mas_install 405772121 "LittleIpsum.app"
+mas_install 1014850245 "Monit.app"
+mas_install 419330170 "Moom.app"
+mas_install 409203825 "Numbers.app"
+mas_install 409201541 "Pages.app"
+mas_install 429449079 "Patterns.app"
+cask_install postman
+cask_install razer-synapse "Razer Synapse.app"
+cask_install sequel-pro
+cask_install slack
+# cask_install superduper
+cask_install the-unarchiver
+cask_install tower
+cask_install twitch
+mas_install 1063996724 "Tyme2.app"
+# cask_install unlox
+cask_install visual-studio-code
+cask_install zoomus "zoom.us.app"
+
+####################
+# Additional Tasks #
+####################
+
+echo "################################################################################"
+echo
+echo "Deployment complete."
+echo
+echo "################################################################################"
+echo
+echo "Just a few more things to take care of:"
+echo
+echo "- Manually install macid at https://macid.co/"
+echo
+echo "- Initalize and wind up your github repositories by running the following:"
+echo "  # init"
+echo "  # up"
+echo
+echo "- Additional commands you can run:"
+echo "  # down"
+echo "  # pr [pull id] [ticket id | branch name]"
+echo
