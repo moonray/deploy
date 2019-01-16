@@ -114,9 +114,6 @@ if [[ ! -f /usr/bin/xcrun ]]; then
   echo "Installing Xcode Command Line Tools..."
   sudo -S xcode-select --install
 fi
-# echo "We'll now accept the Xcode license"
-# sudo -S xcode-select -s /Applications/Xcode.app/Contents/Developer
-# sudo -S xcodebuild -license accept
 
 # Enable command line tools
 sudo -S xcode-select --switch /Library/Developer/CommandLineTools
@@ -126,9 +123,6 @@ if ! command_exists ruby; then
   echo >&2 "Please install Xcode Command Line Tools manually. Aborting."
   exit 1
 fi
-
-# If having problems, try:
-# sudo ln -s /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/usr/include /usr/include
 
 ################################################################################
 # Homebrew and cask installation.                                              #
@@ -277,6 +271,20 @@ mas_install 1063996724 "Tyme2.app"
 # cask_install unlox
 cask_install visual-studio-code
 cask_install zoomus "zoom.us.app"
+
+####################
+# XCode            #
+####################
+# Finally install full version of XCode and enable it.
+mas_install 497799835 "Xcode.app"
+
+# Full version of xcode is required in order to run FileMerge GUI utility.
+sudo -S xcode-select -s /Applications/Xcode.app/Contents/Developer
+# sudo -S xcodebuild -license accept
+XCODE_LAUNCHED="$(sudo -S xcodebuild -checkFirstLaunchStatus; echo $?)"
+if [[ $XCODE_LAUNCHED -ne 0 && $XCODE_LAUNCHED -ne 69 ]]; then
+  sudo -S xcodebuild -runFirstLaunch
+fi
 
 ####################
 # Additional Tasks #
