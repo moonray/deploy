@@ -64,7 +64,7 @@ export PS1_BOLD="\e[1m"
 export PS1_YELLOW="\e[93m"
 export PS1_GREEN="\e[32m"
 export PS1_WHITE="\e[97m"
-export PS1="\[${PS1_BOLD}\u${PS1_RESET} ${PS1_YELLOW}$(parse_git_branch) ${PS1_GREEN}\w${PS1_WHITE}\]\n# \[${PS1_RESET}\]"
+export PS1="\[${PS1_BOLD}\u${PS1_RESET} ${PS1_YELLOW}\$(parse_git_branch) ${PS1_GREEN}\w${PS1_WHITE}\]\n# \[${PS1_RESET}\]"
 
 # Paths
 export PATH_BIN="$HOME/bin"
