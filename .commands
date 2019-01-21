@@ -12,6 +12,48 @@ function pr()
 	fi
 }
 
+function gitlog()
+{
+  PS1_RESET="\033[0m"
+  PS1_YELLOW="\033[93m"
+  PS1_RED="\e[91m"
+
+  DATE="$1"
+	if [[ $# -ne 1 ]]; then
+    DATE=$(date +%Y-%m-%d)
+  fi
+  TOMORROW=$(date -j -f "%Y-%m-%d" -v +1d "$DATE" +%Y-%m-%d)
+
+  GETNAME=`git config user.name`
+
+	BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`
+	if [ ! "${BRANCH}" == "" ]; then
+		REPO=`git rev-parse --show-toplevel`
+		REPO=`basename ${REPO}`
+
+    printf "${PS1_YELLOW}Here are all the commits for ${REPO}${parse_git_dirty} on $DATE:${PS1_RESET}\n"
+    git log --pretty=format:"%ad | %h | %B" --date=format:"%R" --author-date-order --reverse --branches --after="$DATE 00:00" --before="$TOMORROW 00:00" --author="$GETNAME" | sed '/^[[:space:]]*$/d'
+	else
+    printf >&2 "${PS1_RED}This is not a git repository (or any of the parent directories).${PS1_RESET}\n"
+  fi
+}
+
+function gitlogall()
+{
+  CURRENTPATH="`pwd`";
+
+  cd /Volumes/dev/api
+  gitlog $@
+
+  cd /Volumes/dev/frontend
+  gitlog $@
+
+  cd /Volumes/dev/ng
+  gitlog $@
+
+  cd $CURRENTPATH
+}
+
 function init_ng()
 {
   cd "/Volumes/dev/ng"

@@ -323,5 +323,7 @@ echo "  # up"
 echo
 echo "- Additional commands you can run:"
 echo "  # down"
+echo "  # gitlogall"
+echo "  # gitlog [yy-mm-dd]"
 echo "  # pr [pull id] [ticket id | branch name]"
 echo
