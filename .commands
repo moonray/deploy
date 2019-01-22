@@ -57,9 +57,9 @@ function gitlogall()
 function init_ng()
 {
   cd "/Volumes/dev/ng"
-  make up
   git submodule update --init
   ./scripts/dev/docker-compose-bootstrap
+  docker-compose pull
   up
   yarn install
   docker exec -it fpm bash <<'EOF'
@@ -101,7 +101,7 @@ function init()
     source "$HOME/.deploy"
 
     cd "/Volumes/dev"
-    if [[ ! -d "api" || "$(git -C "ng" rev-parse 2>&1)" ]]; then
+    if [[ ! -d "/Volumes/dev/api" || "$(git -C "api" rev-parse 2>&1)" ]]; then
       git clone git@github.com:${GITUSER}/api.git api
       cd api
 
@@ -112,7 +112,7 @@ function init()
 
       cd ..
     fi
-    if [[ ! -d "frontend" || "$(git -C "frontend" rev-parse 2>&1)" ]]; then
+    if [[ ! -d "/Volumes/dev/frontend" || "$(git -C "frontend" rev-parse 2>&1)" ]]; then
       git clone git@github.com:${GITUSER}/frontend.git frontend
       cd frontend
 
@@ -124,7 +124,7 @@ function init()
       init_frontend
       cd ..
     fi
-    if [[ ! -d "ng" || "$(git -C "ng" rev-parse 2>&1)" ]]; then
+    if [[ ! -d "/Volumes/dev/ng" || "$(git -C "ng" rev-parse 2>&1)" ]]; then
       git clone git@github.com:${GITUSER}/SharpSpringNG.git ng
       cd ng
 
