@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ################################################################################
-# Automatic setup for Bala's Sharpspring laptop.                                           #
+# Automatic setup for Bala's Feathr laptop.                                    #
 ################################################################################
 
 command_exists () {
@@ -220,7 +220,7 @@ if [[ ! -d "$HOME/Library/QuickLook/QLStephen.qlgenerator" ]]; then
 fi
 
 # Install GPG Suite
-cask_install gpg-suite "GPG Keychain.app"
+# cask_install gpg-suite "GPG Keychain.app"
 
 ####################
 #   .bashrc        #
@@ -272,15 +272,16 @@ mas_install 419330170 "Moom.app"
 mas_install 409203825 "Numbers.app"
 mas_install 409201541 "Pages.app"
 mas_install 429449079 "Patterns.app"
-cask_install postman
-cask_install razer-synapse "Razer Synapse.app"
-cask_install sequel-pro
+# cask_install postman
+# cask_install razer-synapse "Razer Synapse.app"
+cask_install robo-3t "Robo 3T.app"
+# cask_install sequel-pro
 cask_install slack
 # cask_install superduper
 cask_install the-unarchiver
 cask_install tower
 cask_install twitch
-mas_install 1063996724 "Tyme2.app"
+# mas_install 1063996724 "Tyme2.app"
 # cask_install unlox
 cask_install visual-studio-code
 cask_install zoomus "zoom.us.app"
